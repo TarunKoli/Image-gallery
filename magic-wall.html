@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic-Wall</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        section{
+            width: 100%;
+            height: 100vh;
+            display: block;
+            position: relative;
+        }
+        ul{
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        li{
+            position: absolute;
+            list-style: none;
+            transform-style: preserve-3d;
+            perspective: 600px;
+            z-index: 1;
+            transition: 0.3s linear;
+        }
+        li div{
+            height: 100%;
+            width: 100%;
+        }
+        li div>img{
+            height: 100%;
+            width: 100%;
+        }
+        .left,.right,.top,.bottom{
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgb(16, 33, 51);
+            height: 100%;
+            width: 100%;
+        }
+        .left{
+            transform-origin: left;
+            animation: lefty 0.5s forwards linear;
+        }
+        .right{
+            transform-origin: right;
+            animation: righty 0.5s forwards linear;
+        }
+        .top{
+            transform-origin: top;
+            animation: topy 0.5s forwards linear;
+        }
+        .bottom{
+            transform-origin: bottom;
+            animation: bottomy 0.5s forwards linear;
+        }
+        @keyframes lefty {
+            from{
+                transform: rotateY(0deg);
+            }
+            to{
+                transform: rotateY(-180deg);
+            }
+        }
+        @keyframes righty {
+            from{
+                transform: rotateY(0deg);
+            }
+            to{
+                transform: rotateY(180deg);
+            }
+        }
+        @keyframes topy {
+            from{
+                transform: rotateX(0deg);
+            }
+            to{
+                transform: rotateX(180deg);
+            }
+        }
+        @keyframes bottomy {
+            from{
+                transform: rotateX(0deg);
+            }
+            to{
+                transform: rotateX(-180deg);
+            }
+        }
+    </style>
+
+</head>
+<body>
+   <section>
+        <ul class="layout">
+            <!-- <li class="first"></div>
+            <li class="second"></div> -->
+        </ul>
+   </section> 
+
+   <script>
+
+        class initialize{
+
+            constructor(){
+                this.ul = document.querySelector('.layout');
+               
+                this.screen_width = this.ul.getBoundingClientRect().width;
+                this.screen_height = this.ul.getBoundingClientRect().height;
+            
+                this.box_width = Math.floor(this.screen_width/4);
+                this.box_height = Math.floor(this.screen_height/3);
+                this.elem_grid=[];
+                this.elem_grid_col=[];
+                this.img_trck=[];
+            }
+
+            generateColor(){
+                var x = Math.floor(Math.random() * 256);
+                var y = Math.floor(Math.random() * 256);
+                var z = Math.floor(Math.random() * 256);
+                return "rgb(" + x + "," + y + "," + z + ")"; 
+            }
+            
+            generateImg(){
+                let val=1;
+                let check=true;
+
+                while(1){
+                    val = Math.floor((Math.random()*25)+1);
+                    check=true;
+                    
+                    for(let i=0; i<this.img_trck.length; i++){
+                        if(this.img_trck[i]===val){
+                            check=false;
+                            break;
+                        }
+                    }
+                    if(check) return val;
+                }
+
+            }
+
+            findAndReplace(idx,newVal){
+               const ival = this.img_trck.findIndex((val)=>{
+                    return val==idx;
+               })
+
+               this.img_trck[ival]=newVal;
+            }
+
+            layout(){
+                this.ul.innerHTML='';
+            
+                let pos_y=0;
+                let pos_x=0;
+
+                let idx=0;
+
+                // forming a row type grid
+                for(let i=0; i<3; i++){
+                
+                    pos_x=0;
+                    let tmp=[];
+                    for(let j=0; j<4; j++){
+
+                        const li = document.createElement('li');
+                        const divi = document.createElement('div');
+                        const img = document.createElement('img');
+                        li.style.width=this.box_width+'px';
+                        li.style.height=this.box_height+'px';
+                        li.style.top=pos_y+'px';
+                        li.style.left=pos_x+'px';
+                        img.src=`./assets/Img${++idx}.jpg`;
+                        img.alt=`Img${idx}`
+                        li.setAttribute('data-idx',idx);
+                        this.img_trck.push(idx);
+                        divi.appendChild(img);
+                        li.appendChild(divi);
+                        tmp.push(li);
+                        this.ul.appendChild(li);
+
+                        pos_x+=this.box_width;
+                    }
+                    this.elem_grid.push(tmp);
+                    pos_y+=this.box_height;
+                }
+
+            }
+
+            animate_row(row,type){
+                // Create a new box
+                const li = document.createElement('li');
+                const divi = document.createElement('div');
+                const img = document.createElement('img');
+                li.style.width=this.box_width+'px';
+                li.style.height=this.box_height+'px';
+                li.style.top=this.box_height*row+'px';
+                let img_no=this.generateImg();
+                img.src=`./assets/Img${img_no}.jpg`;
+                img.alt=`Img${img_no}`;
+                li.setAttribute('data-idx',img_no);
+                divi.appendChild(img);
+                li.appendChild(divi);
+                
+                if(type==='front'){
+                    li.style.left=-this.box_width+'px';
+                    this.elem_grid[row].unshift(li);
+                }else{
+                    li.style.left=this.screen_width+'px';
+                    this.elem_grid[row].push(li);
+                }
+
+                this.ul.appendChild(li);
+
+                if(type==='front'){
+                    
+                    this.elem_grid[row].forEach((ele)=>{
+                        ele.style.left=ele.getBoundingClientRect().left+this.box_width+'px';
+                    })
+                
+                    // Removing the out of grid element
+                    setTimeout(()=>{
+                        let del_ele = this.elem_grid[row].pop();
+                        this.findAndReplace(del_ele.getAttribute('data-idx'),img_no);
+                        del_ele.remove();
+                    },500)
+
+                }else{
+                    
+                    this.elem_grid[row].forEach((ele)=>{
+                        ele.style.left=ele.getBoundingClientRect().left-this.box_width+'px';
+                    })
+                
+                    // Removing the out of grid element
+                    setTimeout(()=>{
+                        let del_ele = this.elem_grid[row].shift();
+                        this.findAndReplace(del_ele.getAttribute('data-idx'),img_no);
+                        del_ele.remove();
+                    },500)
+                }
+              
+            }
+
+            animate_col(col,type){
+                // Create a new box
+                const li = document.createElement('li');
+                const divi = document.createElement('div');
+                const img = document.createElement('img');
+                li.style.width=this.box_width+'px';
+                li.style.height=this.box_height+'px';
+                li.style.left=this.box_width*col+'px';
+                let img_no=this.generateImg();
+                img.src=`./assets/Img${img_no}.jpg`;
+                img.alt=`Img${img_no}`;
+                li.setAttribute('data-idx',img_no);
+                divi.appendChild(img);
+                li.appendChild(divi);
+                
+                var tmp=[];
+
+                if(type==='front'){
+                    
+                    li.style.top=-this.box_height+'px';
+                    
+                    tmp.push(li);
+                    for(let j=0; j<this.elem_grid.length; j++){
+                        tmp.push(this.elem_grid[j][col]);
+                    }
+
+                    for(let i=this.elem_grid.length-1; i>0; i--){
+                        this.elem_grid[i][col]=this.elem_grid[i-1][col];
+                    }
+                    
+                    this.elem_grid[0][col]=li;
+
+                }else{
+                    li.style.top=this.screen_height+'px';
+                    
+                    for(let j=0; j<this.elem_grid.length; j++){
+                        tmp.push(this.elem_grid[j][col]);
+                    }
+                    tmp.push(li);
+
+                    for(let i=0; i<this.elem_grid.length-1; i++){
+                        this.elem_grid[i][col]=this.elem_grid[i+1][col];
+                    }
+                    this.elem_grid[this.elem_grid.length-1][col]=li;
+                }
+
+                this.ul.appendChild(li);
+
+                if(type==='front'){
+                    
+                    tmp.forEach((ele)=>{
+                        ele.style.top=ele.getBoundingClientRect().top+this.box_height+'px';
+                    })
+                    // Removing the out of grid element
+                    setTimeout(()=>{
+                        let del_ele = tmp.pop();
+                        this.findAndReplace(del_ele.getAttribute('data-idx'),img_no);
+                        del_ele.remove();
+                    },500)
+                }else{
+                    
+                    tmp.forEach((ele)=>{
+                        ele.style.top=ele.getBoundingClientRect().top-this.box_height+'px';
+                    })
+                    // Removing the out of grid element
+                    setTimeout(()=>{
+                        let del_ele = tmp.shift();
+                        this.findAndReplace(del_ele.getAttribute('data-idx'),img_no);
+                        del_ele.remove();
+                    },500)
+                }
+
+            }
+        
+            animate_rotate(){
+
+                let val = Math.floor((Math.random()*12));
+                let idx=1;
+                let img_no=this.generateImg();
+                let row_no = Math.floor(val/4);
+                let col_no = (val<4)?val: val-(row_no*4);
+
+                const li = this.elem_grid[row_no][col_no];
+                const ele = li.querySelector('div');
+                const img = ele.querySelector('img');
+                ele.style.transition='0.5s linear';
+                ele.style.transform='rotateY(180deg)';
+                setTimeout(()=>{
+                    img.src=`./assets/Img${img_no}.jpg`;
+                    img.style.transform='rotateY(-180deg)'
+                    this.findAndReplace(li.getAttribute('data-idx'),img_no);
+                    li.setAttribute('data-idx',img_no);
+                },220)
+               
+                setTimeout(()=>{
+                    ele.style.transition='none';
+                    ele.style.transform='none';
+                    img.style.transform='none';
+                },500)
+            }
+        
+            animate_dir(dir){
+                
+                let val = Math.floor((Math.random()*12));
+                let idx=1;
+                let img_no=this.generateImg();
+                let row_no = Math.floor(val/4);
+                let col_no = (val<4)?val: val-(row_no*4);
+
+                const li = this.elem_grid[row_no][col_no];
+                const img1 = li.querySelector('img');
+
+                const divi = document.createElement('div');
+                const img = document.createElement('img');
+                img.src=img1.src;
+                setTimeout(()=>{ 
+                    dir==='top' || dir==='bottom' ? img.style.transform='rotateX(-180deg)' : img.style.transform='rotateY(-180deg)';
+                 },250);
+                img1.src=`./assets/Img${img_no}.jpg`;
+                divi.appendChild(img);
+
+                li.style.zIndex=10;
+                divi.classList.add(dir);
+                li.appendChild(divi);
+                
+                setTimeout(()=>{
+                    let target;
+                    if(dir==='left' && col_no-1>=0){
+                        target=this.elem_grid[row_no][col_no-1];
+                        target.querySelector('img').src=img.src;
+                        
+                    }else if(dir==='right' && col_no+1<this.elem_grid[0].length){
+                        target=this.elem_grid[row_no][col_no+1];
+                        target.querySelector('img').src=img.src;
+                        
+                    }else if(dir==='top' && row_no-1>=0){
+                        target=this.elem_grid[row_no-1][col_no];
+                        target.querySelector('img').src=img.src;
+                        
+                    }else if(dir==='bottom' && row_no+1<this.elem_grid.length){
+                        target=this.elem_grid[row_no+1][col_no];
+                        target.querySelector('img').src=img.src;
+                    }
+
+                    if(target){
+                        this.findAndReplace(target.getAttribute('data-idx'),img_no);
+                        target.setAttribute('data-idx',li.getAttribute('data-idx'));
+                    }else{
+                        this.findAndReplace(li.getAttribute('data-idx'),img_no);
+                    }
+                    li.setAttribute('data-idx',img_no);
+                    li.style.zIndex=1;
+                    divi.remove();
+                },1500)
+            }
+        }
+
+
+        var init = new initialize();
+        init.layout();
+        
+        window.addEventListener('resize',()=>{
+            init.layout();
+        });
+
+        setInterval(()=>{
+           
+            let choice = Math.floor((Math.random()*4)+1);
+
+            switch(choice){
+                case 1: {
+                    let row_choice = Math.floor(Math.random()*3);
+                    let type_choice = Math.floor(Math.random()*2);
+                    init.animate_row(row_choice,type_choice===0?'front':'reverse');
+                    break;
+                }
+                case 2:{
+                    let col_choice = Math.floor(Math.random()*4);
+                    let type_choice = Math.floor(Math.random()*2);
+                    init.animate_col(col_choice,type_choice===0?'front':'reverse');
+                    break;
+                }
+                case 3:{
+                    init.animate_rotate();
+                    break;
+                }
+                case 4:{
+                    let type_choice = Math.floor((Math.random()*4)+1);
+                    if(type_choice===1)init.animate_dir('left');
+                    else if(type_choice===2)init.animate_dir('right');
+                    else if(type_choice===3)init.animate_dir('top');
+                    else init.animate_dir('bottom');
+                    break;
+                }
+            }
+
+        },2000);
+
+
+        // setTimeout(()=>{
+        //     init.animate_dir('top');
+        // },2000)
+   </script>
+
+</body>
+</html>
